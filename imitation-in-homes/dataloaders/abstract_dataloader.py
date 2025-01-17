@@ -6,6 +6,7 @@ from torch.utils.data import Dataset
 
 from dataloaders.depth_data import DepthDataLoader
 from dataloaders.pose_data import PoseDataLoader
+from dataloaders.tactile_data import TactileDataLoader
 from dataloaders.utils import DataLoaderConfig, calculate_start_end_indices
 
 
@@ -27,6 +28,7 @@ class AbstractVideoDataset(ABC, Dataset):
         self._num_subslices = len(self._slice_mapping)
         self._action_reader_cache = {}
         self._depth_reader_cache = {}
+        self._tactile_reader_cache = {}
         super().__init__(*args, **kwargs)
 
     @abstractmethod
@@ -67,3 +69,10 @@ class AbstractVideoDataset(ABC, Dataset):
                 depth_loader = DepthDataLoader(bin_root_path=path)
             self._depth_reader_cache[index] = depth_loader
         return self._depth_reader_cache[index]
+
+    def _get_tactile_reader(self, index: int) -> TactileDataLoader:
+        if index not in self._tactile_reader_cache:
+            self._tactile_reader_cache[index] = TactileDataLoader(
+                tactile_data_path=self._data_config.trajectories[index],
+                subtract_sensor_baseline=True,
+            )

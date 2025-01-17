@@ -201,6 +201,7 @@ class DataLoaderConfig:
         trajectory_end_flag: bool = False,
         language_label_file: Optional[str] = None,
         use_depth: bool = False,
+        use_tactile: bool = False,
         depth_cfg: Optional[dict] = None,
         seed: int = 0,
         binarize_gripper: bool = False,
@@ -281,6 +282,7 @@ class DataLoaderConfig:
             self._language_labels = dict(lang_label_object.item())
             self._traj_lang_label = []
         self.use_depth = use_depth
+        self.use_tactile = use_tactile
         self.depth_cfg = depth_cfg
 
         # Now, build the applicable list of trajectories

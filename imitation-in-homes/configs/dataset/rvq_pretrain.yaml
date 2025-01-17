@@ -8,15 +8,18 @@ train:
       trajectory_root_path: ${dataset.train.config.dataset_root}/r3d_files.txt
       original_root: ${env_vars.data_original_root.train}
       new_root: ${dataset.train.config.dataset_root}
-    include_tasks: 
+    include_tasks:
       - ${include_task}
     exclude_homes: []
-    exclude_envs: []
+    include_envs:
+      - ${include_env}
     sequence_length: 1
     control_timeskip: ${control_timeskip}
     safe_action_threshold: 0.05
     relative_gripper: False
     use_depth: ${use_depth}
+    use_tactile: ${use_tactile}
+    fps_subsample: 1
   only_action_return: True
   max_videoreaders_in_memory: 64
   shuffle_mode: RANDOM_ORDER
@@ -34,15 +37,17 @@ test:
       trajectory_root_path: ${dataset.test.config.dataset_root}/r3d_files.txt
       original_root: ${env_vars.data_original_root.val}
       new_root: ${dataset.test.config.dataset_root}
-    include_tasks: 
+    include_tasks:
       - ${include_task}
     exclude_homes: []
-    exclude_envs: []
+    include_envs:
+      - ${include_env}_val
     sequence_length: 1
     control_timeskip: ${control_timeskip}
     safe_action_threshold: 0.05
     relative_gripper: False
     use_depth: ${use_depth}
+    fps_subsample: 1
   only_action_return: True
   max_videoreaders_in_memory: 64
   shuffle_mode: RANDOM_ORDER

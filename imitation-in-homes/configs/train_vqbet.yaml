@@ -5,24 +5,25 @@ defaults:
 - loss_fn: vqbet_loss
 - _self_
 
-num_epochs: 501
-eval_every: 5
+num_epochs: 201
+eval_every: 100
 device: cuda
-batch_size: 50
+batch_size: 16
 sampler: null
 use_depth: False
+use_tactile: False
 freeze_encoder: False
 sequentially_select: True
 split_training: True
 train_freeze_ratio: 0.98
 
-include_task: task_name # a folder named with this task name must be in the dataset root provided in configs/env_vars/env_vars.yaml
-include_env: all
+include_task: White_Board # a folder named with this task name must be in the dataset root provided in configs/env_vars/env_vars.yaml
+include_env: Env1
 
 vqvae_load_dir: /path/to/your_rvq
-vqvae_n_embed: 16 # should be same with rvq pre-training
-temperature: 2.0
-control_timeskip: 7
+vqvae_n_embed: 10 # should be same with rvq pre-training
+temperature: 1.0
+control_timeskip: 3
 
 batch_sampler:
   _target_: dataloaders.decord_dataset.DecordBatchSampler
@@ -54,7 +55,7 @@ scheduler:
 model_path: checkpoints/${now:%Y-%m-%d}/${include_task}-${include_env}-${now:%H-%M-%S}-vqbet-n_embed-${vqvae_n_embed}-depth-${use_depth}-dobb-e-temp-${temperature}-seq-select-${sequentially_select}-split-train-${split_training}-frozen-enc-${freeze_encoder}-timeskip-${control_timeskip}
 files_list_path: r3d_files/${now:%Y-%m-%d}/${include_task}-${include_env}-${now:%H-%M-%S}-vqbet-n_embed-${vqvae_n_embed}-depth-${use_depth}-dobb-e-temp-${temperature}-seq-select-${sequentially_select}-split-train-${split_training}-frozen-enc-${freeze_encoder}-timeskip-${control_timeskip}
 resume_training: false
-save_every: 5
+save_every: 100
 description: "(description)"
 
 wandb:

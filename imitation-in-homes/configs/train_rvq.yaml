@@ -11,13 +11,14 @@ device: cuda
 batch_size: 2048
 sampler: null
 use_depth: True
+use_tactile: True
 freeze_encoder: False
 train_freeze_ratio: 1
 
-include_task: task_name # folder with this task name must be in the dataset root provided in env_vars
-include_env: all
-vqvae_n_embed: 16 # vq-bet hyperparameter tuning
-control_timeskip: 7
+include_task: Door_Opening # folder with this task name must be in the dataset root provided in env_vars
+include_env: Env2
+vqvae_n_embed: 10 # vq-bet hyperparameter tuning
+control_timeskip: 3
 
 batch_sampler:
   _target_: dataloaders.decord_dataset.DecordBatchSampler

@@ -35,11 +35,15 @@ class ExtendedActionDataset(DecordDataset):
         is_padding, actions = self._get_action_slice(trajectory_slice)
         if self._only_action_return:
             return is_padding, actions  # dummy value for obs
-        frames = self._get_video_frames(trajectory_slice)
+        return_frames = (self._get_video_frames(trajectory_slice),)
+        # frames = self._get_video_frames(trajectory_slice)
         if self._data_config.use_depth:  # TODO: here make cleaner?
             depths = self._get_depth_frames(trajectory_slice)
-            return frames, depths, is_padding, actions
-        return frames, is_padding, actions
+            return_frames += (depths,)
+        if self._data_config.use_tactile:
+            tactile = self._get_tactile_frames(trajectory_slice)
+            return_frames += (tactile,)
+        return *return_frames, is_padding, actions
 
     def _get_action_slice(
         self, trajectory_slice: TrajectorySlice

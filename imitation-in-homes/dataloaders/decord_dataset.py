@@ -234,6 +234,13 @@ class DecordDataset(AbstractVideoDataset):
             return frames, depths, actions
         return frames, actions
 
+    def _get_tactile_frames(self, trajectory_slice: TrajectorySlice):
+        tactile_index = trajectory_slice.trajectory_index
+        tactile_indices = self._convert_subslice_to_tactile_indices(trajectory_slice)
+        tactilereader = self._get_tactile_reader(tactile_index)
+        tactile = tactilereader.get_batch(tactile_indices)
+        return tactile
+
     def _get_depth_frames(self, trajectory_slice: TrajectorySlice) -> torch.Tensor:
         video_index = trajectory_slice.trajectory_index
         depth_indices = self._convert_subslice_to_depth_indices(trajectory_slice)
@@ -274,6 +281,11 @@ class DecordDataset(AbstractVideoDataset):
             trajectory_slice.skip,
         )
         return frame_indices
+
+    def _convert_subslice_to_tactile_indices(
+        self, trajectory_slice: TrajectorySlice
+    ) -> Union[List[int], np.ndarray]:
+        return self._convert_subslice_to_indices(trajectory_slice)
 
     def _convert_subslice_to_video_indices(
         self, trajectory_slice: TrajectorySlice
