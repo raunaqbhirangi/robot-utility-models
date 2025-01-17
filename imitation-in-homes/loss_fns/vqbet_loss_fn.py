@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Dict, Optional
 
 import einops
 import torch
@@ -7,6 +7,7 @@ from einops.layers.torch import Rearrange
 
 from loss_fns.abstract_loss_fn import AbstractLossFn
 from models.bet import GPT
+from models.bet.utils import MLP
 from models.bet.vqvae.vqvae import VqVae
 from models.bet.vqbet import VQBehaviorTransformer
 
@@ -24,6 +25,8 @@ class VQBeTLossFn(AbstractLossFn):
         mask_last_max: int = 0,
         learned_mask: bool = True,
         use_depth: bool = False,
+        use_tactile: bool = False,
+        tactile_model_cfg: Optional[Dict] = None,
         model: Optional[torch.nn.Module] = None,
         action_sequence_length: int = 1,
         vqvae_n_latent_dims: int = 512,
@@ -46,6 +49,11 @@ class VQBeTLossFn(AbstractLossFn):
         if use_depth:
             self._depth_net = DepthNet(model.feature_dim)
         self._use_depth = use_depth
+
+        if use_tactile:
+            tactile_model_cfg.hidden_channels.append(gpt_input_dim)
+            self._tactile_net = MLP(**tactile_model_cfg)
+        self._use_tactile = use_tactile
 
         # TODO (mahi): currently, we are casting everything to a concat style goal
         #  but we should be able to handle different types of goals like concat or stack
@@ -129,16 +137,27 @@ class VQBeTLossFn(AbstractLossFn):
         # TODO Mahi fix the order of depth and goals.
         if self._use_goals:
             _, goals, *_, padding, actions = data
-            if self._use_depth:
+            if self._use_depth and self._use_tactile:
+                _, goals, *_, depths, tactile, padding, actions = data
+            elif self._use_depth:
                 _, goals, *_, depths, padding, actions = data
-                output = torch.cat([output, self._depth_net(depths)], dim=-1)
+            elif self._use_tactile:
+                _, goals, *_, tactile, padding, actions = data
             goals = self._goal_adapter(goals)
         else:
             *_, padding, actions = data
             goals = None
-            if self._use_depth:
+            if self._use_tactile and self._use_depth:
+                *_, depths, tactile, padding, actions = data
+            elif self._use_tactile:
+                *_, tactile, padding, actions = data
+            elif self._use_depth:
                 *_, depths, padding, actions = data
-                output = torch.cat([output, self._depth_net(depths)], dim=-1)
+
+        if self._use_depth:
+            output = torch.cat([output, self._depth_net(depths)], dim=-1)
+        if self._use_tactile:
+            tactile = self._tactile_net(tactile)
         adapted_obs = self._adapt_obs(output)
         if "second_half" in kwargs:
             second_half = kwargs["second_half"]
@@ -148,6 +167,7 @@ class VQBeTLossFn(AbstractLossFn):
         _, loss, loss_dict = self._vqbet(
             adapted_obs,
             goal_seq=goals,
+            sensor_seq=tactile if self._use_tactile else None,
             action_seq=action_seq,
             second_half=second_half,
         )

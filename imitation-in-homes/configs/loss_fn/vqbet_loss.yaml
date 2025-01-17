@@ -6,6 +6,11 @@ mask_last_min: 0
 mask_last_max: 0
 learned_mask: False
 use_depth: ${use_depth}
+use_tactile: ${use_tactile}
+tactile_model_cfg:
+  in_channels: 15
+  hidden_channels: [128, 128]
+
 device: ${device}
 
 gpt_model:

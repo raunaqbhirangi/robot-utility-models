@@ -91,16 +91,18 @@ class VQBehaviorTransformer(nn.Module):
     def forward(
         self,
         obs_seq: torch.Tensor,
+        sensor_seq: Optional[torch.Tensor],
         goal_seq: Optional[torch.Tensor],
         action_seq: Optional[torch.Tensor],
         second_half: bool = False,
     ) -> Tuple[Optional[torch.Tensor], Optional[torch.Tensor]]:
         # VQ-BeT doesn't use "padding_seq" and "predict_with_offset" input
-        return self._predict(obs_seq, goal_seq, action_seq, second_half)
+        return self._predict(obs_seq, sensor_seq, goal_seq, action_seq, second_half)
 
     def _predict(
         self,
         obs_seq: torch.Tensor,
+        sensor_seq: Optional[torch.Tensor],
         goal_seq: Optional[torch.Tensor],
         action_seq: Optional[torch.Tensor],
         second_half: bool,
@@ -139,6 +141,24 @@ class VQBehaviorTransformer(nn.Module):
                 ),
                 dim=-2,
             )
+
+        if sensor_seq is not None:
+            if sensor_seq.shape[1] < self.obs_window_size:
+                sensor_seq = torch.cat(
+                    (
+                        torch.tile(
+                            sensor_seq[:, 0, :],
+                            (1, self.obs_window_size - sensor_seq.shape[1], 1),
+                        ),
+                        sensor_seq,
+                    ),
+                    dim=-2,
+                )
+            # Interleave sensor and image encodings to preserve causality
+            obs_seq = torch.stack([sensor_seq, obs_seq], dim=2)
+            obs_seq = torch.reshape(obs_seq, (obs_seq.size(0), -1, obs_seq.size(-1)))
+
+        # TODO: goal stack case currently broken when using tactile
         if self._cbet_method == self.GOAL_SPEC.unconditional:
             gpt_input = obs_seq
         elif self._cbet_method == self.GOAL_SPEC.concat:
@@ -152,6 +172,11 @@ class VQBehaviorTransformer(nn.Module):
         if self._cbet_method == self.GOAL_SPEC.concat:
             # Chop off the goal encodings.
             gpt_output = gpt_output[:, goal_seq.size(1) :, :]
+        if sensor_seq is not None:
+            # Remove the alternating sensor encodings.
+            gpt_output = gpt_output[:, 1::2, :]
+            # obs_seq = obs_seq[:, 1::2, :]
+
         gpt_output = einops.rearrange(gpt_output, "N T (G C) -> (N T) (G C)", G=self._G)
         obs = einops.rearrange(obs_seq, "N T O -> (N T) O")
         obs = obs.unsqueeze(dim=1)
