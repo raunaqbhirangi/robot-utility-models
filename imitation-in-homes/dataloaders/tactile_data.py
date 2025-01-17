@@ -29,7 +29,7 @@ class TactileDataLoader:
         with tactile_pkl_path.open("rb") as f:
             tactile_ts, tactile_data = pickle.load(f)
 
-        self._tactile_data = tactile_data
+        self._tactile_data = np.array(tactile_data, dtype=np.float32)
 
         self._len = len(tactile_data)
 

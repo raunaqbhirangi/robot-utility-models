@@ -74,5 +74,6 @@ class AbstractVideoDataset(ABC, Dataset):
         if index not in self._tactile_reader_cache:
             self._tactile_reader_cache[index] = TactileDataLoader(
                 tactile_data_path=self._data_config.trajectories[index],
-                subtract_sensor_baseline=True,
+                subtract_tactile_baseline=True,
             )
+        return self._tactile_reader_cache[index]
