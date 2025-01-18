@@ -11,7 +11,7 @@ device: cuda
 batch_size: 16
 sampler: null
 use_depth: False
-use_tactile: False
+use_tactile: True
 freeze_encoder: False
 sequentially_select: True
 split_training: True

@@ -1,4 +1,4 @@
-name: home_robot3
+name: home_robot
 channels:
   - pytorch
   - nvidia

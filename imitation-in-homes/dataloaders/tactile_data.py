@@ -1,6 +1,7 @@
 import pickle
 from pathlib import Path
 from typing import Union
+import json
 
 import numpy as np
 import torch
@@ -19,6 +20,11 @@ class TactileDataLoader:
         self.tactile_data_path = Path(tactile_data_path)
         self._load_tactile_data()
         self._baseline = np.median(self._tactile_data[:3], axis=0, keepdims=True)
+        self.base_data_path = self.tactile_data_path.parent
+
+        with open(self.base_data_path / "sensor_stats.json") as json_data:
+            self.sensor_stats = json.loads(json_data)
+            json_data.close()
         if subtract_tactile_baseline:
             self._tactile_data -= self._baseline
 
@@ -45,4 +51,6 @@ class TactileDataLoader:
         indices = np.array(indices)
         n = len(indices)
         assert np.all(indices >= 0)
-        return self._tactile_data[indices]
+        return (
+            self._tactile_data[indices] - self.sensor_stats["shift"]
+        ) / self.sensor_stats["scale"]

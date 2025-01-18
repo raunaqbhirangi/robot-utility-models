@@ -175,14 +175,19 @@ class VQBeTLossFn(AbstractLossFn):
 
     @torch.no_grad()
     def _step(self, data, output, *args, **kwargs):
-        if self._use_depth:
+        if self._use_tactile and self._use_depth:
+            *_, depths, tactile, padding, actions = data
+        elif self._use_tactile:
+            *_, tactile, padding, actions = data
+        elif self._use_depth:
             *_, depths, padding, actions = data
-            output = torch.cat([output, self._depth_net(depths)], dim=-1)
+        output = torch.cat([output, self._depth_net(depths)], dim=-1)
         goals = data[1] if self._use_goals else None
         adapted_obs = self._adapt_obs(output)
         goals = self._goal_adapter(goals) if self._use_goals else None
         a_hat, _, _ = self._vqbet(
             adapted_obs,
+            sensor_seq=self._tactile_net(tactile) if self._use_tactile else None,
             goal_seq=goals,
             action_seq=None,
         )
