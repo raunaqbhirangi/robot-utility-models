@@ -88,6 +88,14 @@ class VQBehaviorTransformer(nn.Module):
         self._secondary_code_multiplier = secondary_code_multiplier
         self._criterion = FocalLoss(gamma=gamma)
 
+        # Add custom embeddings to differentiate between visual and sensor observations.
+        self._visual_embedding = nn.Parameter(
+            torch.randn(self._gpt_model.config.input_dim), requires_grad=True
+        )
+        self._sensor_embedding = nn.Parameter(
+            torch.randn(self._gpt_model.config.input_dim), requires_grad=True
+        )
+
     def forward(
         self,
         obs_seq: torch.Tensor,
@@ -128,6 +136,7 @@ class VQBehaviorTransformer(nn.Module):
         o_{t-1} -> | T | -> (a_{t-1}, a_{t}, a_{t+1})
         o_{t}   -> |   | -> (a_{t}, a_{t+1}, a_{t+2})
         """
+        N, T, *_ = obs_seq.shape
         if obs_seq.shape[1] < self.obs_window_size:
             # if input size is smaller than obs_window size (e.g. the initial steps of env eval episodes,
             # VQ-BeT copy the obs and tile it to match obs_window_size
@@ -154,6 +163,9 @@ class VQBehaviorTransformer(nn.Module):
                     ),
                     dim=-2,
                 )
+            # Add in the custom embeddings.
+            obs_seq += einops.repeat(self._visual_embedding, "D -> N T D", N=N, T=T)
+            sensor_seq += einops.repeat(self._sensor_embedding, "D -> N T D", N=N, T=T)
             # Interleave sensor and image encodings to preserve causality
             obs_seq = torch.stack([sensor_seq, obs_seq], dim=2)
             obs_seq = torch.reshape(obs_seq, (obs_seq.size(0), -1, obs_seq.size(-1)))
