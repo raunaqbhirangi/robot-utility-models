@@ -23,7 +23,7 @@ class TactileDataLoader:
         self.base_data_path = self.tactile_data_path.parent
 
         with open(self.base_data_path / "sensor_stats.json") as json_data:
-            self.sensor_stats = json.loads(json_data)
+            self.sensor_stats = json.load(json_data)
             json_data.close()
         if subtract_tactile_baseline:
             self._tactile_data -= self._baseline
@@ -51,6 +51,9 @@ class TactileDataLoader:
         indices = np.array(indices)
         n = len(indices)
         assert np.all(indices >= 0)
-        return (
+
+        normalized_tactile_data = (
             self._tactile_data[indices] - self.sensor_stats["shift"]
         ) / self.sensor_stats["scale"]
+        
+        return normalized_tactile_data.astype(np.float32)

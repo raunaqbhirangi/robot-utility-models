@@ -11,8 +11,7 @@ train:
     include_tasks:
       - ${include_task}
     exclude_homes: []
-    include_envs:
-      - ${include_env}
+    exclude_envs: []
     sequence_length: 6
     control_timeskip: ${control_timeskip}
     safe_action_threshold: 0.05
@@ -40,13 +39,13 @@ test:
     include_tasks:
       - ${include_task}
     exclude_homes: []
-    include_envs:
-      - ${include_env}_val
+    exclude_envs: []
     sequence_length: 6
     control_timeskip: ${control_timeskip}
     safe_action_threshold: 0.05
     relative_gripper: False
     use_depth: ${use_depth}
+    use_tactile: ${use_tactile}
     fps_subsample: 1
   max_videoreaders_in_memory: 64
   shuffle_mode: RANDOM_ORDER
